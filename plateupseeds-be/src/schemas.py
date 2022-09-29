@@ -28,6 +28,7 @@ class SeedCreate(SeedBase):
 
 class Seed(SeedBase):
     id: int
+    like_count: int
 
     class Config:
         orm_mode = True

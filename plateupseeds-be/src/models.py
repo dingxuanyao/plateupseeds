@@ -18,6 +18,7 @@ class Seed(Base):
     id = Column(Integer, primary_key=True, index=True)
     seed_name = Column(String, unique=True, index=True)
     seed_type = Column(String)
+    like_count = Column(Integer, default=0)
 
 
 ## TODO: likes and dislikes instead

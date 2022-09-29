@@ -24,19 +24,11 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100):
 
     # sorted by number of likes
-    # likes = db.query(models.Like, ).filter(models.Like.is_like == True).group_by(models.Like.seed_id).
-    seeds = db.query(models.Seed, func.count(models.Like.id))\
-        .group_by(models.Seed.id)\
-        .filter(models.Seed.seed_type == seed_type)\
-        .filter(models.Like.is_like == True)\
-        .join(models.Like, models.Seed.id == models.Like.seed_id)\
-        .order_by(func.count(models.Like.id).desc())\
-        .offset(skip)\
-        .limit(limit)\
-        # .all()
-    actual_seeds = db.query(seeds).(statement=seeds).all()
-    print(print(str(seeds)))
-    return seeds.all()
+    seeds = db.query(models.Seed).filter(
+        models.Seed.seed_type == seed_type).order_by(
+        models.Seed.like_count.desc()).offset(skip).limit(limit).all()
+
+    return seeds
     # return db.query(models.Seed).filter(models.Seed.seed_type == seed_type).order_by(models.Seed.likes.desc()).offset(skip).limit(limit).all()
     return db.query(models.Seed).filter(models.Seed.seed_type == seed_type).offset(skip).limit(limit).all()
 
@@ -71,6 +63,10 @@ def upsert_like(db: Session, like: schemas.LikeCreate):
     db.add(db_like)
     db.commit()
     db.refresh(db_like)
+
+    # update seed like count
+    update_seed_like_count(db, like)
+
     return db_like
 
 
@@ -80,8 +76,21 @@ def delete_like(db: Session, like: schemas.LikeCreate):
         models.Like.seed_id == like.seed_id).first()
     db.delete(db_like)
     db.commit()
+
+    # update seed like count
+    update_seed_like_count(db, like)
     return db_like
 
+
+def update_seed_like_count(db, like: schemas.LikeCreate):
+    db_seed = db.query(models.Seed).filter(
+        models.Seed.id == like.seed_id).first()
+    db_seed.like_count = db.query(models.Like).filter(
+        models.Like.seed_id == like.seed_id,
+        models.Like.is_like == True
+    ).count()
+    db.add(db_seed)
+    db.commit()
 
 # def get_dislikes(db: Session, seed_name: str):
 #     seed_id = db.query(models.Seed).filter(
