@@ -1,4 +1,3 @@
-from pickletools import int4
 from pydantic import BaseModel
 
 
@@ -7,10 +6,26 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    pass
+    email: str
 
 
-class User(UserBase):
+class User(UserCreate):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class LikeDelete(BaseModel):
+    seed_id: int
+    user_id: int
+
+
+class LikeCreate(LikeDelete):
+    is_like: bool
+
+
+class Like(LikeCreate):
     id: int
 
     class Config:
@@ -28,34 +43,7 @@ class SeedCreate(SeedBase):
 
 class Seed(SeedBase):
     id: int
-    like_count: int
+    likes: list[Like] = []
 
     class Config:
         orm_mode = True
-
-
-class LikeDelete(BaseModel):
-    seed_id: int
-    user_id: int
-
-class LikeCreate(LikeDelete):
-    is_like: bool
-
-
-class Like(LikeCreate):
-    id: int
-
-    class Config:
-        orm_mode = True
-
-
-# class DislikesCreate(BaseModel):
-#     user_id: int
-#     seed_id: int
-
-
-# class Dislikes(DislikesCreate):
-#     id: int
-
-#     class Config:
-#         orm_mode = True

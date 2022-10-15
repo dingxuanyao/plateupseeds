@@ -1,20 +1,26 @@
 <script lang="ts">
+import { decodeCredential } from 'vue3-google-login';
+const API_URL = import.meta.env.VITE_API_URL;
+
+
 export default {
   methods: {
-    onSignIn(googleUser) {
-      var profile = googleUser.getBasicProfile();
-      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-      console.log('Name: ' + profile.getName());
-      console.log('Image URL: ' + profile.getImageUrl());
-      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    callback(response: any) {
+      console.log("Handle the response", response)
+      const userData = decodeCredential(response.credential)
+      console.log("User data", userData)
+      this.getUser(userData.email)
     },
-    signOut() {
-      var auth2 = gapi.auth2.getAuthInstance();
-      auth2.signOut().then(function () {
-        console.log('User signed out.');
-      });
-    }
-  }
+    getUser(email: string) {
+      fetch(`${API_URL}/users/?email=${email}`)
+        .then((response) => response.json())
+        .then((data) => {
+          this.$emit("loggedIn", data.id, true)
+          console.log(data)
+        })
+    },
+  },
+  emits: ['loggedIn'],
 }
 </script>
 <template>
@@ -34,10 +40,7 @@ export default {
             <a class="nav-link active" aria-current="page" target="_blank" href="https://wiki.plateupgame.com/">Wiki</a>
           </li>
           <li class="nav-item">
-            <div class="g-signin2" data-onsuccess="onSignIn"></div>
-          </li>
-          <li class="nav-item">
-            <a href="#" onclick="signOut">Sign out</a>
+            <GoogleLogin :callback="callback" prompt auto-login />
           </li>
         </ul>
         <a href="https://www.buymeacoffee.com/dxyao" target="_blank">

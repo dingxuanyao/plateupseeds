@@ -5,6 +5,10 @@ from sqlalchemy import func
 from . import models, schemas
 
 
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
+
+
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
@@ -21,20 +25,27 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
-def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100):
+def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100, random: bool = False):
 
+    if random:
+        order_by = func.random()
+    else:
+        order_by = models.Seed.like_count.desc()
     # sorted by number of likes
     seeds = db.query(models.Seed).filter(
         models.Seed.seed_type == seed_type).order_by(
-        models.Seed.like_count.desc()).offset(skip).limit(limit).all()
-
+        order_by).offset(skip).limit(limit).all()
     return seeds
-    # return db.query(models.Seed).filter(models.Seed.seed_type == seed_type).order_by(models.Seed.likes.desc()).offset(skip).limit(limit).all()
-    return db.query(models.Seed).filter(models.Seed.seed_type == seed_type).offset(skip).limit(limit).all()
 
 
-def get_seed(db: Session, seed_name: str,):
-    return db.query(models.Seed).filter(models.Seed.seed_name == seed_name).first()
+def get_seeds_count(db: Session, seed_type: Str):
+    return db.query(models.Seed).filter(
+        models.Seed.seed_type == seed_type).count()
+
+
+def get_seed(db: Session, seed_id: str,):
+    seed = db.query(models.Seed).filter(models.Seed.id == seed_id).first()
+    return seed
 
 
 def create_seed(db: Session, seed: schemas.SeedCreate):
@@ -64,9 +75,6 @@ def upsert_like(db: Session, like: schemas.LikeCreate):
     db.commit()
     db.refresh(db_like)
 
-    # update seed like count
-    update_seed_like_count(db, like)
-
     return db_like
 
 
@@ -76,40 +84,13 @@ def delete_like(db: Session, like: schemas.LikeCreate):
         models.Like.seed_id == like.seed_id).first()
     db.delete(db_like)
     db.commit()
-
-    # update seed like count
-    update_seed_like_count(db, like)
     return db_like
 
 
-def update_seed_like_count(db, like: schemas.LikeCreate):
-    db_seed = db.query(models.Seed).filter(
-        models.Seed.id == like.seed_id).first()
-    db_seed.like_count = db.query(models.Like).filter(
-        models.Like.seed_id == like.seed_id,
-        models.Like.is_like == True
-    ).count()
-    db.add(db_seed)
-    db.commit()
-
-# def get_dislikes(db: Session, seed_name: str):
-#     seed_id = db.query(models.Seed).filter(
-#         models.Seed.seed_name == seed_name).first().id
-#     return db.query(models.Dislike).filter(models.Dislike.seed_id == seed_id).all()
-
-
-# def create_dislike(db: Session, dislike: schemas.DislikesCreate):
-#     db_dislike = models.Dislike(**dislike.dict())
-#     db.add(db_dislike)
-#     db.commit()
-#     db.refresh(db_dislike)
-#     return db_dislike
-
-
-# def delete_dislike(db: Session, dislike: schemas.DislikesCreate):
-#     db_dislike = db.query(models.Dislike).filter(
-#         models.Dislike.user_id == dislike.user_id).filter(
-#         models.Dislike.seed_id == dislike.seed_id).first()
-#     db.delete(db_dislike)
-#     db.commit()
-#     return db_dislike
+def db_health_check(db: Session):
+    # check if can connect to db
+    try:
+        db.execute("SELECT 1")
+        return True
+    except:
+        return False

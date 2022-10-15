@@ -29,5 +29,5 @@ coverage
 *.sln
 *.sw?
 
-.env
+.env*
 main.js
