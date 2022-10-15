@@ -1,0 +1,22 @@
+version: '3.6'
+services:
+  plateupapi:
+    image: dingxuanyao/plateupseed:v1
+    depends_on:
+      - db
+    networks:
+      - local
+    ports:
+      - "80:80"
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: 'greatpassword'
+    networks:
+      - local
+    ports:
+      - 5431:5432
+
+networks:
+  local:
+    driver: bridge
