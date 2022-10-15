@@ -6,12 +6,17 @@
     "build": "run-p type-check build-only",
     "preview": "vite preview --port 4173",
     "build-only": "vite build",
+    "build-staging": "vite build --mode staging",
+    "build-production": "vite build",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
     "bootstrap": "^5.2.1",
-    "vue": "^3.2.38"
+    "vue": "^3.2.38",
+    "vue-final-modal": "^3.4.4",
+    "vue-gtag": "^2.0.1",
+    "vue3-google-login": "^2.0.12"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",

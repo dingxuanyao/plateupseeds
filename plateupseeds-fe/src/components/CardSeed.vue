@@ -1,19 +1,24 @@
 <script lang="ts">
 import ThumbsUp from "./icons/ThumbsUp.vue";
 import ThumbsDown from "./icons/ThumbsDown.vue";
-const API_URL = `http://localhost:8000`;
-const ASSETS_URL = `https://plateupseeds.com/seeds_sorted/high_quality`;
+const API_URL = import.meta.env.VITE_API_URL;
+const MEDIA_URL = `https://media.plateupseeds.com/seeds_sorted`;
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
   components: {
     ThumbsUp,
     ThumbsDown
   },
   props: {
-    seedName: {
-      type: String,
-      required: true,
-    },
+    // seedName: {
+    //   type: String,
+    //   required: true,
+    // },
+    // seedType: {
+    //   type: String,
+    //   required: true,
+    // },
     seedId: {
       type: Number,
       required: true,
@@ -22,36 +27,76 @@ export default {
       type: Number,
       required: true,
     },
+    userLoggedIn: {
+      type: Boolean,
+      required: true,
+    },
+    // likes: {
+    //   type: [Object],
+    //   required: true,
+    // },
   },
-  created() {
-    // fetch on init
-    this.fetchLikes();
+  watch: {
+    userId: function (newUserId, oldUserId) {
+      this.fetchLikes();
+    },
+    seedId: function (newSeedId, oldSeedId) {
+      this.fetchLikes();
+    },
   },
   data() {
     return {
+      seedName: "",
+      seedType: "",
       likes: [],
       dislikes: [],
       userLiked: false,
       userDisliked: false,
     }
   },
+  computed: {
+    // numLikes() {
+    //   return this.likes.likes.length;
+    // },
+    // numDislikes() {
+    //   return this.likes.dislikes.length;
+    // },
+  },
+  created() {
+    this.fetchLikes();
+  },
   methods: {
+    buttonClass(likeButton: boolean) {
+      var classString = "";
+      if (likeButton && !this.userLiked) {
+        classString += 'bg-transparent ';
+      } else if (!likeButton && !this.userDisliked) {
+        classString += 'bg-transparent ';
+      }
+      if (!this.userLoggedIn) {
+        classString += 'disabled';
+      }
+      return classString;
+    },
     fetchLikes() {
-      fetch(`${API_URL}/likes/${this.seedName}`)
+      fetch(`${API_URL}/seeds/${this.seedId}`)
         .then((response) => response.json())
         .then((data) => {
-          this.likes = data.filter((like) => like.is_like).map((like) => like.user_id);
-          this.dislikes = data.filter((like) => !like.is_like).map((like) => like.user_id);
-          this.userLiked = this.likes.includes(this.userId);
-          this.userDisliked = this.dislikes.includes(this.userId);
+          this.seedName = data.seed_name;
+          this.seedType = data.seed_type;
+          this.likes = data.likes.filter((like: any) => like.is_like);
+          this.dislikes = data.likes.filter((like: any) => !like.is_like);
+          this.userLiked = this.likes.filter((like: any) => like.user_id === this.userId).length > 0;
+          this.userDisliked = this.dislikes.filter((like: any) => like.user_id === this.userId).length > 0;
         })
     },
-    getSeedUrl(seedName: string) {
-      return `${ASSETS_URL}/${seedName}.jpg`;
+    getSeedUrl(seedName: string, seedType: string) {
+      return `${MEDIA_URL}/${seedType}/${seedName}.jpg`;
+    },
+    getSeedUrlHighQuality(seedName: string) {
+      return `${MEDIA_URL}/high_quality/${seedName}.jpg`;
     },
     toggle(isLikedButton: boolean) {
-      // console.log("isLikedButton" + isLikedButton);
-      // console.log("userLiked" + this.userLiked);
       if (isLikedButton && this.userLiked) {
         this.deleteLike();
       } else if (!isLikedButton && this.userDisliked) {
@@ -93,26 +138,30 @@ export default {
           this.fetchLikes();
         });
     },
+    showModal() {
+      this.$emit('showModal', this.seedName, this.seedId);
+    },
   },
-};
+  emits: ['showModal'],
+});
 </script>
 
 <template>
   <div class="col-lg-2 col-sm-4 p-0">
-    <div class="card text-white bg-dark text-center border-secondary m-1" v-bind:data-bs-photourl=getSeedUrl(seedName)>
+    <div class="card text-white bg-dark text-center border-secondary m-0"
+      v-bind:data-bs-photourl="getSeedUrl(seedName, seedType)">
       <div class="card-body">
-        <div style="width:100%;height:0; padding-top:80%;position:relative;">
-          <img v-bind:src=getSeedUrl(seedName) class="card-img-top btn" alt="Responsive image" loading="lazy"
-            data-bs-toggle="modal" data-bs-target="#exampleModal"
-            style="position:absolute; top:0; left:0; width:100%;" />
+        <div>
+          <img v-bind:src="getSeedUrl(seedName, seedType)" class="card-img-top btn p-0" alt="Responsive image"
+            loading="lazy" @click="showModal" />
         </div>
         <div class="card-text">{{ seedName }}</div>
         <div class="text-start">
-          <button class="btn btn-success" v-bind:class="userLiked ? null : 'bg-transparent'" @click="toggle(like=true)">
+          <button class="btn btn-success" v-bind:class="buttonClass(isLikedButton=true)" @click="toggle(like=true)">
             <ThumbsUp />
             {{ likes.length }}
           </button>
-          <button class="btn btn-danger" v-bind:class="userDisliked ? null : 'bg-transparent'" @click="toggle(like=false)">
+          <button class="btn btn-danger" v-bind:class="buttonClass(isLikedButton=false)" @click="toggle(like=false)">
             <ThumbsDown />
             {{ dislikes.length }}
           </button>
@@ -121,3 +170,10 @@ export default {
     </div>
   </div>
 </template>
+<style scoped>
+img:hover {
+  /* border: 5px; */
+  border-style: solid;
+  border-color: #007bff;
+}
+</style>

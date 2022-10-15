@@ -1,13 +1,38 @@
+from alembic import command
+from alembic.config import Config as AlembicConfig
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from authlib.integrations.starlette_client import OAuthError
+from starlette.responses import HTMLResponse, RedirectResponse, Response
 
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 
+from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
+from starlette.middleware.sessions import SessionMiddleware
+from .config import settings
 
-app = FastAPI()
+
+config = Config('.env')  # read config from .env file
+oauth = OAuth(config)
+oauth.register(
+    name='google',
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+app = FastAPI(
+    docs_url="/docs" if settings.ENABLE_DOCS else None,
+    redoc_url="/redoc" if settings.ENABLE_DOCS else None,
+)
+
+app.add_middleware(SessionMiddleware, secret_key="secret-string")
 
 
 def get_db():
@@ -18,13 +43,15 @@ def get_db():
         db.close()
 
 
-models.Base.metadata.create_all(bind=engine)
-
+alembic_config = AlembicConfig("alembic.ini")
+alembic_config.set_main_option("sqlalchemy.url", settings.DB_URL)
+command.upgrade(alembic_config, 'head')
 
 origins = [
     "http://127.0.0.1:5500",
     "http://127.0.0.1:5173",
     "http://localhost:5173",
+    "*"
 ]
 
 app.add_middleware(
@@ -36,15 +63,17 @@ app.add_middleware(
 )
 
 
+@app.get("/users/", response_model=schemas.User)
+def get_user_from_email(email: str, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=email)
+    if db_user:
+        return db_user
+    return crud.create_user(db=db, user=schemas.UserCreate(email=email))
+
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db=db, user=user)
-
-
-@app.get("/users/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
+    return crud.create_user(db=db, user=schemas.UserCreate(email=user.email))
 
 
 @app.get("/users/{user_id}", response_model=schemas.User)
@@ -55,18 +84,26 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return db_user
 
 
-@app.get("/seeds/{seed_name}", response_model=schemas.Seed)
-def read_seeds(seed_name: str, db: Session = Depends(get_db)):
-    seed = crud.get_seed(db, seed_name=seed_name)
+@app.get("/seeds/{seed_id}", response_model=schemas.Seed)
+def read_seeds(seed_id: str, db: Session = Depends(get_db)):
+    seed = crud.get_seed(db, seed_id=seed_id)
     if seed is None:
         raise HTTPException(status_code=404, detail="Seed not found")
     return seed
 
 
-@app.get("/seeds_by_type/{seed_type}", response_model=list[schemas.Seed])
-def read_seeds(seed_type: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    seed = crud.get_seeds(db, seed_type=seed_type, skip=skip, limit=limit)
-    return seed
+@app.get("/seeds_by_type/{seed_type}", response_model=list[int])
+def read_seeds(seed_type: str, skip: int = 0, limit: int = 100, random: bool = False, db: Session = Depends(get_db)):
+    seeds = crud.get_seeds(db, seed_type=seed_type,
+                           skip=skip, limit=limit, random=random)
+    seed_ids = [seed.id for seed in seeds]
+    return seed_ids
+
+
+@app.get("/count_seeds_by_type/{seed_type}", response_model=int)
+def read_seeds(seed_type: str, db: Session = Depends(get_db)):
+    count = crud.get_seeds_count(db, seed_type=seed_type)
+    return count
 
 
 @app.post("/seeds/", response_model=schemas.Seed)
@@ -97,20 +134,35 @@ def delete_like(like: schemas.LikeDelete, db: Session = Depends(get_db)):
     return crud.delete_like(db, like=like)
 
 
-# @app.get("/dislikes/{seed_name}", response_model=list[schemas.Dislikes])
-# def get_dislikes(seed_name: str, db: Session = Depends(get_db)):
-#     dislikes = crud.get_dislikes(db, seed_name=seed_name)
-#     return dislikes
+@app.route('/login')
+async def login(request: Request):
+    # absolute url for callback
+    # we will define it below
+    redirect_uri = request.url_for('auth')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-# @app.post("/dislikes/", response_model=schemas.DislikesCreate)
-# def create_dislike(dislike: schemas.LikesCreate, db: Session = Depends(get_db)):
-#     return crud.create_dislike(db, dislike=dislike)
+@app.get('/auth')
+async def auth(request: Request):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError as error:
+        return HTMLResponse(f'<h1>{error.error}</h1>')
+    user = token.get('userinfo')
+    if user:
+        request.session['user'] = dict(user)
+    return user
+
+    return RedirectResponse(url='/')
 
 
-# @app.delete("/dislikes/", response_model=schemas.Dislikes)
-# def delete_dislike(dislike: schemas.LikesCreate, db: Session = Depends(get_db)):
-#     return crud.delete_dislike(db, dislike=dislike)
+@app.get("/db_health")
+def db_health_check():
+    db_status = crud.db_health_check(db=SessionLocal())
+    if db_status:
+        return Response(status_code=200)
+    else:
+        return HTTPException(status_code=500, detail="Cannot connect to database")
 
 
 @app.get("/")
