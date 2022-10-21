@@ -1,6 +1,7 @@
 from alembic import command
 from alembic.config import Config as AlembicConfig
 from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import false
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
@@ -68,7 +69,8 @@ app.add_middleware(
 @app.get("/users/", response_model=schemas.User)
 def get_user(email: str = "", user_id: int = 0, db: Session = Depends(get_db)):
     if email and user_id:
-        raise HTTPException(status_code=400, detail="You can only pass either email or user_id")
+        raise HTTPException(
+            status_code=400, detail="You can only pass either email or user_id")
     if email:
         user = crud.get_user_by_email(db, email)
     if user_id:
@@ -81,6 +83,7 @@ def get_user(email: str = "", user_id: int = 0, db: Session = Depends(get_db)):
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=schemas.UserCreate(email=user.email))
+
 
 @app.put("/users/", response_model=schemas.User)
 def update_user(user: schemas.User, db: Session = Depends(get_db)):
@@ -104,9 +107,9 @@ def read_seeds(seed_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/seeds_by_type/{seed_type}", response_model=list[int])
-def read_seeds(seed_type: str, skip: int = 0, limit: int = 100, random: bool = False, db: Session = Depends(get_db)):
+def read_seeds(seed_type: str, skip: int = 0, limit: int = 100, random: bool = False, sort_by_likes: bool = True, db: Session = Depends(get_db)):
     seeds = crud.get_seeds(db, seed_type=seed_type,
-                           skip=skip, limit=limit, random=random)
+                           skip=skip, limit=limit, random=random, sort_by_likes=sort_by_likes)
     seed_ids = [seed.id for seed in seeds]
     return seed_ids
 
@@ -185,6 +188,7 @@ def get_comments(seed_id: str, db: Session = Depends(get_db)):
 @app.post("/comments/", response_model=schemas.Comment)
 def create_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
     return crud.create_comment(db, comment=comment)
+
 
 @app.get("/")
 async def main():

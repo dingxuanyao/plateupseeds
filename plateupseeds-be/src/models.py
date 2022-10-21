@@ -40,6 +40,15 @@ class Seed(Base):
                 .where(Like.is_like == True)
                 .label("like_count"))
 
+    @hybrid_property
+    def comment_count(self):
+        return len(self.comments)
+    @comment_count.expression
+    def comment_count(cls):
+        return (select([func.count(Comment.id)])
+                .where(Comment.seed_id == cls.id)
+                .label("comment_count"))
+
     def __repr__(self) -> str:
         return f"Seed(id={self.id}, seed_name={self.seed_name}, seed_type={self.seed_type}, like_count={self.like_count})"
 

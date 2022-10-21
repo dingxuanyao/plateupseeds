@@ -6,11 +6,14 @@ from . import models, schemas
 
 from datetime import datetime, timezone
 
+
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
+
 def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
+
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -19,12 +22,15 @@ def get_user(db: Session, user_id: int):
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
+
 def update_user(db: Session, user: schemas.User):
-    db_user = db.query(models.User).filter(models.User.id == user.id).filter(models.User.email == user.email).first()
+    db_user = db.query(models.User).filter(models.User.id == user.id).filter(
+        models.User.email == user.email).first()
     db_user.anonymous_name = user.anonymous_name
     db.commit()
     db.refresh(db_user)
     return db_user
+
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(**user.dict())
@@ -34,13 +40,19 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
-def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100, random: bool = False):
+def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100, random: bool = False, sort_by_likes: bool = False):
 
+    seeds = db.query(models.Seed).filter(
+        models.Seed.seed_type == seed_type)
     if random:
-        order_by = func.random()
+        seeds_sorted = seeds.order_by(func.random())
+        # order_by = func.random()
+    elif sort_by_likes:
+        seeds_sorted = seeds.order_by(models.Seed.like_count.desc()).order_by(models.Seed.comment_count.desc())
     else:
-        order_by = models.Seed.like_count.desc()
+        seeds_sorted = seeds.order_by(models.Seed.comment_count.desc()).order_by(models.Seed.like_count.desc())
     # sorted by number of likes
+    return seeds_sorted.offset(skip).limit(limit).all()
     seeds = db.query(models.Seed).filter(
         models.Seed.seed_type == seed_type).order_by(
         order_by).offset(skip).limit(limit).all()
@@ -99,6 +111,7 @@ def delete_like(db: Session, like: schemas.LikeCreate):
 def get_comments(db: Session, seed_id: int):
     return db.query(models.Comment).filter(models.Comment.seed_id == seed_id).order_by(models.Comment.created_time.desc()).all()
 
+
 def create_comment(db: Session, comment: schemas.CommentCreate):
     created_time = datetime.utcnow()
     db_comment = models.Comment(**comment.dict(), created_time=created_time)
@@ -106,6 +119,7 @@ def create_comment(db: Session, comment: schemas.CommentCreate):
     db.commit()
     db.refresh(db_comment)
     return db_comment
+
 
 def db_health_check(db: Session):
     # check if can connect to db
