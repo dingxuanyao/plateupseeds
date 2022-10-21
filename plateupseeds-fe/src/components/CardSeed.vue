@@ -1,6 +1,7 @@
 <script lang="ts">
 import ThumbsUp from "./icons/ThumbsUp.vue";
 import ThumbsDown from "./icons/ThumbsDown.vue";
+import CommentsIcon from "./icons/CommentsIcon.vue";
 const API_URL = import.meta.env.VITE_API_URL;
 const MEDIA_URL = `https://media.plateupseeds.com/seeds_sorted`;
 import { defineComponent } from 'vue'
@@ -8,7 +9,8 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   components: {
     ThumbsUp,
-    ThumbsDown
+    ThumbsDown,
+    CommentsIcon,
   },
   props: {
     // seedName: {
@@ -52,6 +54,7 @@ export default defineComponent({
       dislikes: [],
       userLiked: false,
       userDisliked: false,
+      comments: [],
     }
   },
   computed: {
@@ -88,6 +91,7 @@ export default defineComponent({
           this.dislikes = data.likes.filter((like: any) => !like.is_like);
           this.userLiked = this.likes.filter((like: any) => like.user_id === this.userId).length > 0;
           this.userDisliked = this.dislikes.filter((like: any) => like.user_id === this.userId).length > 0;
+          this.comments = data.comments;
         })
     },
     getSeedUrl(seedName: string, seedType: string) {
@@ -157,13 +161,17 @@ export default defineComponent({
         </div>
         <div class="card-text">{{ seedName }}</div>
         <div class="text-start">
-          <button class="btn btn-success" v-bind:class="buttonClass(isLikedButton=true)" @click="toggle(like=true)">
+          <button class="btn btn-success" v-bind:class="buttonClass(true)" @click="toggle(true)">
             <ThumbsUp />
             {{ likes.length }}
           </button>
-          <button class="btn btn-danger" v-bind:class="buttonClass(isLikedButton=false)" @click="toggle(like=false)">
+          <button class="btn btn-danger" v-bind:class="buttonClass(false)" @click="toggle(false)">
             <ThumbsDown />
             {{ dislikes.length }}
+          </button>
+          <button class="btn btn-secondary bg-transparent" @click="showModal">
+            <CommentsIcon />
+            {{ comments.length }}
           </button>
         </div>
       </div>

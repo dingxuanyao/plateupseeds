@@ -39,7 +39,7 @@ export default defineComponent({
       seeds: [],
       currentPage: 1,
       totalPages: 1,
-      pageRange: [],
+      pageRange: [0], // how to typescript this?
       random: false,
     }
   },
@@ -126,7 +126,7 @@ export default defineComponent({
           <ul class="pagination">
             <li class="page-item"><a class="page-link bg-dark border-secondary btn"
                 @click="changePage(currentPage - 1)">Previous</a></li>
-            <template v-for="page in this.pageRange">
+            <template v-for="page in pageRange">
               <li class="page-item"><a class="page-link bg-dark border-secondary btn" @click="changePage(page)"
                   v-bind:class="page==currentPage ? 'active' : null ">{{ page }}</a></li>
             </template>

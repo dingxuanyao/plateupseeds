@@ -1,6 +1,11 @@
 <script lang="ts">
+import Comments from "./Comments.vue";
+
 const MEDIA_URL = `https://media.plateupseeds.com/seeds_sorted`;
 export default {
+  components: {
+    Comments,
+  },
   // data: () => ({
   //   showModal: false
   // }),
@@ -11,6 +16,7 @@ export default {
     },
     seedName: {
       type: String,
+      default: ""
       // required: true,
     },
     seedType: {
@@ -19,6 +25,7 @@ export default {
     },
     seedId: {
       type: Number,
+      default: -1
       // required: true,
     },
     userId: {
@@ -43,10 +50,12 @@ export default {
 </script>
 <template>
   <div>
-    <vue-final-modal v-model="showModal" classes="modal-container" content-class="modal-content bg-dark text-white" @closed="hideModal">
+    <vue-final-modal v-model="showModal" classes="modal-container" content-class="modal-content bg-dark text-white"
+      @closed="hideModal" :esc-to-close=true>
       <span class="modal__title">{{seedName}}</span>
       <span class="modal__content">
-        <img :src="getSeedUrlHighQuality(seedName)" style="width: 40vw;">
+        <img :src="getSeedUrlHighQuality(seedName)">
+        <Comments v-bind:seedId="seedId" v-bind:userId="userId"></Comments>
       </span>
     </vue-final-modal>
     <!-- <button @click="showModal = true">Open Modal</button> -->
@@ -56,8 +65,9 @@ export default {
 ::v-deep .modal-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  width: auto;
+  align-items: start;
+  width: 100vw;
+  overflow: scroll;
 }
 
 ::v-deep .modal-content {
@@ -74,5 +84,12 @@ export default {
 .modal__title {
   font-size: 1.5rem;
   font-weight: 700;
+}
+
+img {
+  width: 40vw;
+  display: block;
+  margin: 0 auto;
+  height: auto;
 }
 </style>

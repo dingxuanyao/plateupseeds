@@ -4,10 +4,13 @@ from sqlalchemy import func
 
 from . import models, schemas
 
+from datetime import datetime, timezone
 
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -16,6 +19,12 @@ def get_user(db: Session, user_id: int):
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
+def update_user(db: Session, user: schemas.User):
+    db_user = db.query(models.User).filter(models.User.id == user.id).filter(models.User.email == user.email).first()
+    db_user.anonymous_name = user.anonymous_name
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(**user.dict())
@@ -86,6 +95,17 @@ def delete_like(db: Session, like: schemas.LikeCreate):
     db.commit()
     return db_like
 
+
+def get_comments(db: Session, seed_id: int):
+    return db.query(models.Comment).filter(models.Comment.seed_id == seed_id).order_by(models.Comment.created_time.desc()).all()
+
+def create_comment(db: Session, comment: schemas.CommentCreate):
+    created_time = datetime.utcnow()
+    db_comment = models.Comment(**comment.dict(), created_time=created_time)
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
 
 def db_health_check(db: Session):
     # check if can connect to db

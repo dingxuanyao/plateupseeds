@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class UserBase(BaseModel):
@@ -11,6 +12,7 @@ class UserCreate(UserBase):
 
 class User(UserCreate):
     id: int
+    anonymous_name: str = ""
 
     class Config:
         orm_mode = True
@@ -32,6 +34,20 @@ class Like(LikeCreate):
         orm_mode = True
 
 
+class CommentCreate(BaseModel):
+    user_id: int
+    seed_id: int
+    comment: str
+
+
+class Comment(CommentCreate):
+    id: int
+    created_time: datetime
+
+    class Config:
+        orm_mode = True
+
+
 class SeedBase(BaseModel):
     seed_name: str
     seed_type: str
@@ -44,6 +60,7 @@ class SeedCreate(SeedBase):
 class Seed(SeedBase):
     id: int
     likes: list[Like] = []
+    comments: list[Comment] = []
 
     class Config:
         orm_mode = True
