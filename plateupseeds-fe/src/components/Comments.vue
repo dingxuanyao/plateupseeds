@@ -183,6 +183,7 @@ export default defineComponent({
         .then((response) => response.json())
         .then((data) => {
           this.fetchComments();
+          this.new_comment = "";
         });
     },
   },

@@ -41,6 +41,7 @@ export default defineComponent({
       totalPages: 1,
       pageRange: [0], // how to typescript this?
       random: false,
+      sortByLikes: true,
     }
   },
   watch: {
@@ -51,10 +52,14 @@ export default defineComponent({
     totalPages: function (newPage, oldPage) {
       this.updatePageRange();
     },
+    sortByLikes: function (newSort, oldSort) {
+      this.fetchSeeds();
+      this.updatePageRange();
+    },
   },
   methods: {
     fetchSeeds() {
-      fetch(`${API_URL}/seeds_by_type/${this.seedType}?limit=${SEEDS_PER_PAGE}&skip=${(this.currentPage - 1) * SEEDS_PER_PAGE}&random=${this.random}`)
+      fetch(`${API_URL}/seeds_by_type/${this.seedType}?limit=${SEEDS_PER_PAGE}&skip=${(this.currentPage - 1) * SEEDS_PER_PAGE}&random=${this.random}&sort_by_likes=${this.sortByLikes}`)
         .then((response) => response.json())
         .then((data) => {
           this.seeds = data
@@ -93,6 +98,9 @@ export default defineComponent({
       this.random = false;
       this.fetchSeeds();
     },
+    pass() {
+      return;
+    },
   },
   emits: ['showModal'],
 });
@@ -108,15 +116,22 @@ export default defineComponent({
     </h2>
     <!-- <div class="row m-0 bg-dark" id="seed-large-preview"></div> -->
     <div class="accordion-collapse collapse" v-bind:class="seedType">
-      <div class="row p-3 bg-dark">
-        <div>
-          <button class="btn btn-success" v-bind:class="random ? null : 'bg-transparent'" @click="randomize">
+      <div class="p-3 bg-dark">
+        <div class="btn-group me-3">
+          <button type="button" class="btn btn-success" v-bind:class="random ? null : 'bg-transparent'"
+            @click="randomize">
             <ReloadIcon></ReloadIcon>
             random
           </button>
-          <button class="btn btn-danger bg-transparent" :disabled="!random" @click="disableRandom">
+          <button type="button" class="btn btn-danger bg-transparent" :disabled="!random" @click="disableRandom">
             <CloseIcon></CloseIcon>
           </button>
+        </div>
+        <div class="btn-group">
+          <input type="radio" class="btn-check" v-bind:value=true v-bind:name="`btngroup-sortByLikes-${seedType}`" v-bind:id="`likesSelected-${seedType}`" v-model="sortByLikes" checked>
+          <label class="btn btn-outline-success" v-bind:for="`likesSelected-${seedType}`">Likes</label>
+          <input type="radio" class="btn-check" v-bind:value=false v-bind:name="`btngroup-sortByLikes-${seedType}`" v-bind:id="`commentsSelected-${seedType}`" v-model="sortByLikes">
+          <label class="btn btn-outline-success" v-bind:for="`commentsSelected-${seedType}`">Comments</label>
         </div>
       </div>
       <div class="row m-0 bg-dark" v-bind:id="`seed-${seedType}`">
