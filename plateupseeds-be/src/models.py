@@ -13,7 +13,10 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
-    anonymous_name = Column(String)
+    anonymous_name = Column(String, default="")
+
+    def __repr__(self) -> str:
+        return f"User(id={self.id}, email={self.email}, anonymous_name={self.anonymous_name})"
 
 
 class Seed(Base):
@@ -23,6 +26,7 @@ class Seed(Base):
     seed_name = Column(String, unique=True, index=True)
     seed_type = Column(String)
     likes = relationship("Like")
+    comments = relationship("Comment")
 
     @hybrid_property
     def like_count(self):
@@ -54,6 +58,7 @@ class Comment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    seed_id = Column(Integer, ForeignKey("seeds.id"))
     created_time = Column(DateTime)
     comment = Column(String)
 

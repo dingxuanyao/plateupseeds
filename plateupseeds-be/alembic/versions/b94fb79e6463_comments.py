@@ -27,7 +27,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_comments_id'), 'comments', ['id'], unique=False)
-    op.add_column('users', sa.Column('anonymous_name', sa.String(), nullable=True))
+    op.add_column('users', sa.Column('anonymous_name', sa.String(), nullable=True, server_default=''))
     # ### end Alembic commands ###
 
 

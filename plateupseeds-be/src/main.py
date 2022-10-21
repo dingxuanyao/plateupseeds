@@ -27,6 +27,12 @@ oauth.register(
     }
 )
 
+
+# alembic_config = AlembicConfig("alembic.ini")
+# alembic_config.set_main_option("sqlalchemy.url", settings.DB_URL)
+# command.upgrade(alembic_config, 'head')
+
+
 app = FastAPI(
     docs_url="/docs" if settings.ENABLE_DOCS else None,
     redoc_url="/redoc" if settings.ENABLE_DOCS else None,
@@ -42,10 +48,6 @@ def get_db():
     finally:
         db.close()
 
-
-alembic_config = AlembicConfig("alembic.ini")
-alembic_config.set_main_option("sqlalchemy.url", settings.DB_URL)
-command.upgrade(alembic_config, 'head')
 
 origins = [
     "http://127.0.0.1:5500",
@@ -64,16 +66,25 @@ app.add_middleware(
 
 
 @app.get("/users/", response_model=schemas.User)
-def get_user_from_email(email: str, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=email)
-    if db_user:
-        return db_user
+def get_user(email: str = "", user_id: int = 0, db: Session = Depends(get_db)):
+    if email and user_id:
+        raise HTTPException(status_code=400, detail="You can only pass either email or user_id")
+    if email:
+        user = crud.get_user_by_email(db, email)
+    if user_id:
+        user = crud.get_user_by_id(db, user_id)
+    if user:
+        return user
     return crud.create_user(db=db, user=schemas.UserCreate(email=email))
 
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=schemas.UserCreate(email=user.email))
+
+@app.put("/users/", response_model=schemas.User)
+def update_user(user: schemas.User, db: Session = Depends(get_db)):
+    return crud.update_user(db=db, user=user)
 
 
 @app.get("/users/{user_id}", response_model=schemas.User)
@@ -164,6 +175,16 @@ def db_health_check():
     else:
         return HTTPException(status_code=500, detail="Cannot connect to database")
 
+
+@app.get("/comments/{seed_id}", response_model=list[schemas.Comment])
+def get_comments(seed_id: str, db: Session = Depends(get_db)):
+    comments = crud.get_comments(db, seed_id=seed_id)
+    return comments
+
+
+@app.post("/comments/", response_model=schemas.Comment)
+def create_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
+    return crud.create_comment(db, comment=comment)
 
 @app.get("/")
 async def main():

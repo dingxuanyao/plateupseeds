@@ -6,17 +6,14 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default {
   methods: {
     callback(response: any) {
-      console.log("Handle the response", response)
       const userData = decodeCredential(response.credential)
-      console.log("User data", userData)
       this.getUser(userData.email)
     },
     getUser(email: string) {
       fetch(`${API_URL}/users/?email=${email}`)
         .then((response) => response.json())
         .then((data) => {
-          this.$emit("loggedIn", data.id, true)
-          console.log(data)
+          this.$emit("loggedIn", data.id, data.anonymous_name, true)
         })
     },
   },
