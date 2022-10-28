@@ -26,7 +26,7 @@ class Seed(Base):
     seed_name = Column(String, unique=True, index=True)
     seed_type = Column(String)
     likes = relationship("Like")
-    comments = relationship("Comment")
+    comments = relationship("Comment", order_by="Comment.created_time.desc()")
 
     @hybrid_property
     def like_count(self):
