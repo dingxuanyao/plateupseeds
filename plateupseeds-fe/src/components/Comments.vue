@@ -132,10 +132,14 @@ export default defineComponent({
                 let comment = {
                   id: data[i].id,
                   comment: data[i].comment,
-                  created_time: this.parseDatetime(data[i].created_time),
+                  created_time: data[i].created_time,
+                  parsed_created_time: this.parseDatetime(data[i].created_time),
                   username: username,
                 };
                 this.comments.push(comment);
+                this.comments.sort((a, b) => {
+                  return new Date(b.created_time).getTime() - new Date(a.created_time).getTime();
+                });
               });
           }
         });
@@ -218,7 +222,7 @@ export default defineComponent({
             <div class="card-body p-2">
               <p class="card-text mb-1 fw-bold">{{comment.username}}</p>
               <p class="card-text mb-0">{{comment.comment}}</p>
-              <p class="card-text text-muted">{{comment.created_time}}</p>
+              <p class="card-text text-muted">{{comment.parsed_created_time}}</p>
             </div>
           </div>
         </div>
