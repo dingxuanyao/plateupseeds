@@ -31,3 +31,6 @@ coverage
 
 .env*
 main.js
+
+# terraform
+deployment/.terraform

@@ -40,10 +40,15 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
-def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100, random: bool = False, sort_by_likes: bool = False):
-
-    seeds = db.query(models.Seed).filter(
-        models.Seed.seed_type == seed_type)
+def get_seeds(db: Session, seed_type: Str,  skip: int = 0, limit: int = 100, random: bool = False, sort_by_likes: bool = False, seed_theme: str = 'all'):
+    seeds = []
+    if seed_theme != 'all':
+        seeds = db.query(models.Seed).filter(
+            models.Seed.seed_type == seed_type).filter(
+            models.Seed.seed_theme == seed_theme)
+    else:
+        seeds = db.query(models.Seed).filter(
+            models.Seed.seed_type == seed_type)
     if random:
         seeds_sorted = seeds.order_by(func.random())
         # order_by = func.random()

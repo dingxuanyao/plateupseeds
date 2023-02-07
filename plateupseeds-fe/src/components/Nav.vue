@@ -39,14 +39,18 @@ export default {
           <li class="nav-item">
             <GoogleLogin :callback="callback" prompt auto-login />
           </li>
+          <li class="nav-item">
+            <a class="nav-link inactive"> Last updated: Jan 15, 2023. PlateUp! v1.1.2
+            </a>
+          </li>
         </ul>
-        <a href="https://www.buymeacoffee.com/dxyao" target="_blank">
-          <button type="button" class="btn btn-warning" data-bs-toggle="tooltip" data-bs-placement="left"
-            data-bs-title="This could be an ad, but nobody likes those. Consider donating instead!">
-            <i class="bi bi-cup-hot"></i>
-            Buy me a coffee?
-          </button>
-        </a>
+          <a href="https://www.buymeacoffee.com/dxyao" target="_blank">
+            <button type="button" class="btn btn-warning" data-bs-toggle="tooltip" data-bs-placement="left"
+              data-bs-title="This could be an ad, but nobody likes those. Consider donating instead!">
+              <i class="bi bi-cup-hot"></i>
+              Buy me a coffee?
+            </button>
+          </a>
       </div>
     </div>
   </nav>

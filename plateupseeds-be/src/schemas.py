@@ -51,6 +51,7 @@ class Comment(CommentCreate):
 class SeedBase(BaseModel):
     seed_name: str
     seed_type: str
+    seed_theme: str
 
 
 class SeedCreate(SeedBase):

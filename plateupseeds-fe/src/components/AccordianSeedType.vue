@@ -42,6 +42,7 @@ export default defineComponent({
       pageRange: [0], // how to typescript this?
       random: false,
       sortByLikes: true,
+      filterByTheme: 'all',
     }
   },
   watch: {
@@ -56,10 +57,14 @@ export default defineComponent({
       this.fetchSeeds();
       this.updatePageRange();
     },
+    filterByTheme: function (newTheme, oldTheme) {
+      this.fetchSeeds();
+      this.updatePageRange();
+    },
   },
   methods: {
     fetchSeeds() {
-      fetch(`${API_URL}/seeds_by_type/${this.seedType}?limit=${SEEDS_PER_PAGE}&skip=${(this.currentPage - 1) * SEEDS_PER_PAGE}&random=${this.random}&sort_by_likes=${this.sortByLikes}`)
+      fetch(`${API_URL}/seeds_by_type/${this.seedType}?limit=${SEEDS_PER_PAGE}&skip=${(this.currentPage - 1) * SEEDS_PER_PAGE}&random=${this.random}&sort_by_likes=${this.sortByLikes}&seed_theme=${this.filterByTheme}`)
         .then((response) => response.json())
         .then((data) => {
           this.seeds = data
@@ -114,7 +119,6 @@ export default defineComponent({
         <h2>{{ title }}</h2>
       </button>
     </h2>
-    <!-- <div class="row m-0 bg-dark" id="seed-large-preview"></div> -->
     <div class="accordion-collapse collapse" v-bind:class="seedType">
       <div class="p-3 bg-dark">
         <div class="btn-group me-3">
@@ -127,11 +131,23 @@ export default defineComponent({
             <CloseIcon></CloseIcon>
           </button>
         </div>
-        <div class="btn-group">
+        <div class="btn-group me-3">
           <input type="radio" class="btn-check" v-bind:value=true v-bind:name="`btngroup-sortByLikes-${seedType}`" v-bind:id="`likesSelected-${seedType}`" v-model="sortByLikes" checked>
           <label class="btn btn-outline-success" v-bind:for="`likesSelected-${seedType}`">Likes</label>
           <input type="radio" class="btn-check" v-bind:value=false v-bind:name="`btngroup-sortByLikes-${seedType}`" v-bind:id="`commentsSelected-${seedType}`" v-model="sortByLikes">
           <label class="btn btn-outline-success" v-bind:for="`commentsSelected-${seedType}`">Comments</label>
+        </div>
+        <div class="btn-group me-3">
+          <input type="radio" class="btn-check" v-bind:value="`all`" v-bind:name="`btngroup-filterAllThemes-${seedType}`" v-bind:id="`filterAllThemes-${seedType}`" v-model="filterByTheme" checked>
+          <label class="btn btn-outline-success" v-bind:for="`filterAllThemes-${seedType}`">All</label>
+          <input type="radio" class="btn-check" v-bind:value="`COUNTRY`" v-bind:name="`btngroup-filterCountryThemes-${seedType}`" v-bind:id="`filterCountryThemes-${seedType}`" v-model="filterByTheme">
+          <label class="btn btn-outline-success" v-bind:for="`filterCountryThemes-${seedType}`">COUNTRY</label>
+          <input type="radio" class="btn-check" v-bind:value="`ALPINE`" v-bind:name="`btngroup-filterAlpineThemes-${seedType}`" v-bind:id="`filterAlpineThemes-${seedType}`" v-model="filterByTheme">
+          <label class="btn btn-outline-success" v-bind:for="`filterAlpineThemes-${seedType}`">ALPINE</label>
+          <input type="radio" class="btn-check" v-bind:value="`CITY`" v-bind:name="`btngroup-filterCityThemes-${seedType}`" v-bind:id="`filterCityThemes-${seedType}`" v-model="filterByTheme">
+          <label class="btn btn-outline-success" v-bind:for="`filterCityThemes-${seedType}`">CITY</label>
+          <input type="radio" class="btn-check" v-bind:value="`AUTUMN`" v-bind:name="`btngroup-filterAutumnThemes-${seedType}`" v-bind:id="`filterAutumnThemes-${seedType}`" v-model="filterByTheme">
+          <label class="btn btn-outline-success" v-bind:for="`filterAutumnThemes-${seedType}`">AUTUMN</label>
         </div>
       </div>
       <div class="row m-0 bg-dark" v-bind:id="`seed-${seedType}`">

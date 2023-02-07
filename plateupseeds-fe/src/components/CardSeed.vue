@@ -3,7 +3,7 @@ import ThumbsUp from "./icons/ThumbsUp.vue";
 import ThumbsDown from "./icons/ThumbsDown.vue";
 import CommentsIcon from "./icons/CommentsIcon.vue";
 const API_URL = import.meta.env.VITE_API_URL;
-const MEDIA_URL = `https://media.plateupseeds.com/seeds_sorted`;
+const MEDIA_URL = `https://media.plateupseeds.com`;
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -94,11 +94,8 @@ export default defineComponent({
           this.comments = data.comments;
         })
     },
-    getSeedUrl(seedName: string, seedType: string) {
-      return `${MEDIA_URL}/${seedType}/${seedName}.jpg`;
-    },
-    getSeedUrlHighQuality(seedName: string) {
-      return `${MEDIA_URL}/high_quality/${seedName}.jpg`;
+    getSeedUrlLowQuality(seedName: string) {
+      return `${MEDIA_URL}/v1.1.2/${seedName}_low_quality.jpg`;
     },
     toggle(isLikedButton: boolean) {
       if (isLikedButton && this.userLiked) {
@@ -151,12 +148,12 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="col-lg-2 col-sm-4 p-0">
+  <div class="col-6 col-sm-4 col-lg-2 p-0">
     <div class="card text-white bg-dark text-center border-secondary m-0"
-      v-bind:data-bs-photourl="getSeedUrl(seedName, seedType)">
+      v-bind:data-bs-photourl="getSeedUrlLowQuality(seedName)">
       <div class="card-body">
         <div>
-          <img v-bind:src="getSeedUrl(seedName, seedType)" class="card-img-top btn p-0" alt="Responsive image"
+          <img v-bind:src="getSeedUrlLowQuality(seedName)" class="card-img-top btn p-0" alt="Responsive image"
             loading="lazy" @click="showModal" />
         </div>
         <div class="card-text">{{ seedName }}</div>

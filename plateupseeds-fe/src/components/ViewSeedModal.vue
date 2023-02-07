@@ -6,9 +6,6 @@ export default {
   components: {
     Comments,
   },
-  // data: () => ({
-  //   showModal: false
-  // }),
   props: {
     showModal: {
       type: Boolean,
@@ -42,10 +39,10 @@ export default {
       return `${MEDIA_URL}/v1.1.2/${seedName}_original.jpg`;
     },
     hideModal() {
-      this.$emit('hideModal');
+      this.$emit('hideViewSeedModal');
     }
   },
-  emits: ['hideModal']
+  emits: ['hideViewSeedModal']
 }
 </script>
 <template>
@@ -58,7 +55,6 @@ export default {
         <Comments v-bind:seedId="seedId" v-bind:userId="userId"></Comments>
       </span>
     </vue-final-modal>
-    <!-- <button @click="showModal = true">Open Modal</button> -->
   </div>
 </template>
 <style scoped>

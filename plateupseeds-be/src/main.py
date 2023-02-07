@@ -28,10 +28,9 @@ oauth.register(
     }
 )
 
-
-# alembic_config = AlembicConfig("alembic.ini")
-# alembic_config.set_main_option("sqlalchemy.url", settings.DB_URL)
-# command.upgrade(alembic_config, 'head')
+alembic_config = AlembicConfig("alembic.ini")
+alembic_config.set_main_option("sqlalchemy.url", settings.DB_URL)
+command.upgrade(alembic_config, 'head')
 
 
 app = FastAPI(
@@ -107,9 +106,9 @@ def read_seeds(seed_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/seeds_by_type/{seed_type}", response_model=list[int])
-def read_seeds(seed_type: str, skip: int = 0, limit: int = 100, random: bool = False, sort_by_likes: bool = True, db: Session = Depends(get_db)):
+def read_seeds(seed_type: str, skip: int = 0, limit: int = 100, random: bool = False, sort_by_likes: bool = True, seed_theme: str = "all", db: Session = Depends(get_db)):
     seeds = crud.get_seeds(db, seed_type=seed_type,
-                           skip=skip, limit=limit, random=random, sort_by_likes=sort_by_likes)
+                           skip=skip, limit=limit, random=random, sort_by_likes=sort_by_likes, seed_theme=seed_theme)
     seed_ids = [seed.id for seed in seeds]
     return seed_ids
 
@@ -122,6 +121,7 @@ def read_seeds(seed_type: str, db: Session = Depends(get_db)):
 
 @app.post("/seeds/", response_model=schemas.Seed)
 def create_seed(seed: schemas.SeedCreate, db: Session = Depends(get_db)):
+    print(seed)
     exists = db.query(models.Seed).filter(
         models.Seed.seed_name == seed.seed_name).first()
     if exists:

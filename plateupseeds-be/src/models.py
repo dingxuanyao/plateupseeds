@@ -25,6 +25,7 @@ class Seed(Base):
     id = Column(Integer, primary_key=True, index=True)
     seed_name = Column(String, unique=True, index=True)
     seed_type = Column(String)
+    seed_theme = Column(String)
     likes = relationship("Like")
     comments = relationship("Comment", order_by="Comment.created_time.desc()")
 
